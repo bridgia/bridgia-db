@@ -284,8 +284,8 @@ export default function Home() {
                   <Mail className="text-[#774f9f] mt-1" size={20} />
                   <div>
                     <p className="font-medium text-[#1a1a1a]">Email</p>
-                    <a href="mailto:info@bridgia.sa" className="text-[#774f9f] hover:text-[#6a4a8a] transition-colors">
-                      info@bridgia.sa
+                    <a href="mailto:bd@bridgia-sa.com" className="text-[#774f9f] hover:text-[#6a4a8a] transition-colors">
+                      bd@bridgia-sa.com
                     </a>
                   </div>
                 </div>
@@ -294,8 +294,8 @@ export default function Home() {
                   <Phone className="text-[#774f9f] mt-1" size={20} />
                   <div>
                     <p className="font-medium text-[#1a1a1a]">Phone</p>
-                    <a href="tel:+966112345678" className="text-[#774f9f] hover:text-[#6a4a8a] transition-colors">
-                      +966 11 234 5678
+                    <a href="tel:+966576672060" className="text-[#774f9f] hover:text-[#6a4a8a] transition-colors">
+                      +966 57667 2060
                     </a>
                   </div>
                 </div>
