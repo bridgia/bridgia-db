@@ -1,6 +1,9 @@
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
 import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 /**
  * Bridgia Website - Institutional Minimalism Design
@@ -14,6 +17,10 @@ import { useState } from "react";
  */
 
 export default function Home() {
+  // The userAuth hooks provides authentication state
+  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
+  let { user, loading, error, isAuthenticated, logout } = useAuth();
+
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -21,7 +28,8 @@ export default function Home() {
     message: "",
   });
 
-  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitContactMutation = trpc.contact.submit.useMutation();
 
   const handleContactChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setContactForm({
@@ -30,13 +38,26 @@ export default function Home() {
     });
   };
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormSubmitted(true);
-    setTimeout(() => {
+    setIsSubmitting(true);
+
+    try {
+      await submitContactMutation.mutateAsync({
+        name: contactForm.name,
+        email: contactForm.email,
+        company: contactForm.company,
+        message: contactForm.message,
+      });
+
+      toast.success("Message sent successfully. We will be in touch soon.");
       setContactForm({ name: "", email: "", company: "", message: "" });
-      setFormSubmitted(false);
-    }, 2000);
+    } catch (error) {
+      console.error("Contact submission error:", error);
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -327,7 +348,8 @@ export default function Home() {
                     value={contactForm.name}
                     onChange={handleContactChange}
                     required
-                    className="w-full px-4 py-2 border border-[#d1cbe5] rounded-lg bg-white text-[#1a1a1a] focus:outline-none focus:border-[#774f9f] focus:ring-1 focus:ring-[#774f9f]"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 border border-[#d1cbe5] rounded-lg bg-white text-[#1a1a1a] focus:outline-none focus:border-[#774f9f] focus:ring-1 focus:ring-[#774f9f] disabled:opacity-50"
                     placeholder="Your name"
                   />
                 </div>
@@ -343,7 +365,8 @@ export default function Home() {
                     value={contactForm.email}
                     onChange={handleContactChange}
                     required
-                    className="w-full px-4 py-2 border border-[#d1cbe5] rounded-lg bg-white text-[#1a1a1a] focus:outline-none focus:border-[#774f9f] focus:ring-1 focus:ring-[#774f9f]"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 border border-[#d1cbe5] rounded-lg bg-white text-[#1a1a1a] focus:outline-none focus:border-[#774f9f] focus:ring-1 focus:ring-[#774f9f] disabled:opacity-50"
                     placeholder="your@email.com"
                   />
                 </div>
@@ -358,7 +381,8 @@ export default function Home() {
                     name="company"
                     value={contactForm.company}
                     onChange={handleContactChange}
-                    className="w-full px-4 py-2 border border-[#d1cbe5] rounded-lg bg-white text-[#1a1a1a] focus:outline-none focus:border-[#774f9f] focus:ring-1 focus:ring-[#774f9f]"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 border border-[#d1cbe5] rounded-lg bg-white text-[#1a1a1a] focus:outline-none focus:border-[#774f9f] focus:ring-1 focus:ring-[#774f9f] disabled:opacity-50"
                     placeholder="Your company"
                   />
                 </div>
@@ -373,17 +397,19 @@ export default function Home() {
                     value={contactForm.message}
                     onChange={handleContactChange}
                     required
+                    disabled={isSubmitting}
                     rows={4}
-                    className="w-full px-4 py-2 border border-[#d1cbe5] rounded-lg bg-white text-[#1a1a1a] focus:outline-none focus:border-[#774f9f] focus:ring-1 focus:ring-[#774f9f]"
+                    className="w-full px-4 py-2 border border-[#d1cbe5] rounded-lg bg-white text-[#1a1a1a] focus:outline-none focus:border-[#774f9f] focus:ring-1 focus:ring-[#774f9f] disabled:opacity-50"
                     placeholder="Tell us about your needs..."
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-[#774f9f] text-white py-2 rounded-lg font-medium hover:bg-[#6a4a8a] transition-colors"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#774f9f] text-white py-2 rounded-lg font-medium hover:bg-[#6a4a8a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {formSubmitted ? "Message Sent" : "Send Message"}
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </button>
               </form>
             </div>
