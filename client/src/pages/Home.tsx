@@ -64,10 +64,10 @@ export default function Home() {
     <div className="min-h-screen bg-white text-[#1a1a1a]">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white border-b border-[#e8e3f0]">
-        <div className="container flex items-center justify-between py-6">
-          <div className="text-2xl font-semibold text-[#774f9f]" style={{ fontFamily: "'Crimson Text', serif" }}>
-            Bridgia
-          </div>
+        <div className="container flex items-center justify-between py-4">
+          <a href="/" className="flex items-center">
+            <img src="/bridgia-logo.png" alt="Bridgia" className="h-12 w-auto" />
+          </a>
           <div className="hidden md:flex gap-8 text-sm">
             <a href="#what-we-do" className="text-[#1a1a1a] hover:text-[#774f9f] transition-colors">
               What We Do
@@ -420,9 +420,14 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-[#e8e3f0] py-12 bg-[#f5f3f8]">
         <div className="container">
-          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-[#666666]">
-            <p>&copy; 2025 Bridgia. All rights reserved.</p>
-            <p>Business Intelligence & Advisory | Riyadh, Saudi Arabia</p>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-sm text-[#666666]">
+            <div className="flex items-center gap-4">
+              <img src="/bridgia-logo.png" alt="Bridgia" className="h-10 w-auto" />
+              <div>
+                <p>&copy; 2025 Bridgia. All rights reserved.</p>
+                <p>Business Intelligence & Advisory | Riyadh, Saudi Arabia</p>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
