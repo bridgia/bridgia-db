@@ -39,9 +39,13 @@ queryClient.getMutationCache().subscribe(event => {
 
 const getApiUrl = () => {
   if (typeof window === 'undefined') return '/api/trpc';
-  const protocol = window.location.protocol;
-  const host = window.location.host;
-  return `${protocol}//${host}/api/trpc`;
+  try {
+    const url = new URL('/api/trpc', window.location.href);
+    return url.toString();
+  } catch (e) {
+    console.error('Invalid URL construction:', e);
+    return '/api/trpc';
+  }
 };
 
 const trpcClient = trpc.createClient({
