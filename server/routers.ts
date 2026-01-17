@@ -3,8 +3,10 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { createContactSubmission } from "./db";
+import { createContactSubmission, getAllContactSubmissions, getAdminCredentials, setAdminPassword } from "./db";
 import { notifyOwner } from "./_core/notification";
+import { TRPCError } from "@trpc/server";
+import bcrypt from "bcryptjs";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -48,6 +50,128 @@ export const appRouter = router({
         } catch (error) {
           console.error("Contact submission error:", error);
           throw error;
+        }
+      }),
+  }),
+
+  admin: router({
+    login: publicProcedure
+      .input(z.object({ password: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const credentials = await getAdminCredentials();
+          if (!credentials) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Admin credentials not set up",
+            });
+          }
+
+          const isValid = await bcrypt.compare(input.password, credentials.password);
+          if (!isValid) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Invalid password",
+            });
+          }
+
+          ctx.res.cookie("admin_token", "authenticated", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: 24 * 60 * 60 * 1000,
+          });
+
+          return { success: true };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          console.error("Admin login error:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Login failed",
+          });
+        }
+      }),
+
+    getSubmissions: publicProcedure.query(async ({ ctx }) => {
+      try {
+        const adminToken = ctx.req.cookies?.admin_token;
+        if (!adminToken) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Not authenticated",
+          });
+        }
+
+        const submissions = await getAllContactSubmissions();
+        return submissions;
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error("Get submissions error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch submissions",
+        });
+      }
+    }),
+
+    setPassword: publicProcedure
+      .input(z.object({ currentPassword: z.string(), newPassword: z.string().min(6) }))
+      .mutation(async ({ input }) => {
+        try {
+          const credentials = await getAdminCredentials();
+          if (!credentials) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Admin credentials not set up",
+            });
+          }
+
+          const isValid = await bcrypt.compare(input.currentPassword, credentials.password);
+          if (!isValid) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Current password is incorrect",
+            });
+          }
+
+          const hashedPassword = await bcrypt.hash(input.newPassword, 10);
+          await setAdminPassword(hashedPassword);
+
+          return { success: true };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          console.error("Set password error:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to set password",
+          });
+        }
+      }),
+
+    initializePassword: publicProcedure
+      .input(z.object({ password: z.string().min(6) }))
+      .mutation(async ({ input }) => {
+        try {
+          const credentials = await getAdminCredentials();
+          if (credentials) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Admin password already set",
+            });
+          }
+
+          const hashedPassword = await bcrypt.hash(input.password, 10);
+          await setAdminPassword(hashedPassword);
+
+          return { success: true };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          console.error("Initialize password error:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to initialize password",
+          });
         }
       }),
   }),

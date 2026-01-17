@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, contactSubmissions, InsertContactSubmission } from "../drizzle/schema";
+import { InsertUser, users, contactSubmissions, InsertContactSubmission, adminCredentials, InsertAdminCredentials } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -101,6 +101,64 @@ export async function createContactSubmission(submission: InsertContactSubmissio
     return result;
   } catch (error) {
     console.error("[Database] Failed to create contact submission:", error);
+    throw error;
+  }
+}
+
+export async function getAllContactSubmissions() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get contact submissions: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(contactSubmissions)
+      .orderBy(desc(contactSubmissions.createdAt));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get contact submissions:", error);
+    throw error;
+  }
+}
+
+export async function getAdminCredentials() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get admin credentials: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db.select().from(adminCredentials).limit(1);
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("[Database] Failed to get admin credentials:", error);
+    throw error;
+  }
+}
+
+export async function setAdminPassword(password: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot set admin password: database not available");
+    throw new Error("Database not available");
+  }
+
+  try {
+    const existing = await getAdminCredentials();
+    if (existing) {
+      await db
+        .update(adminCredentials)
+        .set({ password })
+        .where(eq(adminCredentials.id, existing.id));
+    } else {
+      await db.insert(adminCredentials).values({ password });
+    }
+  } catch (error) {
+    console.error("[Database] Failed to set admin password:", error);
     throw error;
   }
 }
